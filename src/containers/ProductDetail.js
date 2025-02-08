@@ -1,67 +1,119 @@
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import { fetchProductDetail, addToCart } from "../redux/actions/productActions";
 import {
-  selectedProducts,
-  removeSelectedProducts,
-} from "../redux/action/productActions";
+    Card,
+    CardMedia,
+    CardContent,
+    Typography,
+    Button,
+    Grid,
+    Box,
+    IconButton,
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
 
 const ProductDetail = () => {
-  const product = useSelector((state) => state.product);
-  const { image, title, price, category, description } = product;
-  const { productId } = useParams();
-  const dispatch = useDispatch();
-  console.log(product);
+    const { productId } = useParams();
+    const dispatch = useDispatch();
+    const product = useSelector((state) => state.products.selectedProduct);
+    const [quantity, setQuantity] = useState(1);
 
-  const fetchProductDetails = async () => {
-    let url = "https://fakestoreapi.com/products/" + productId;
-    const response = await axios.get(url).catch((err) => {
-      console.log("Err ", err);
-    });
-    console.log(response.data);
-    dispatch(selectedProducts(response.data));
-  };
+    useEffect(() => {
+        dispatch(fetchProductDetail(productId));
+    }, [dispatch, productId]);
 
-  useEffect(() => {
-    if (productId && productId !== "") fetchProductDetails();
-    return () => {
-      dispatch(removeSelectedProducts());
-    };
-  }, [productId]);
+    return (
+        <Box sx={{ padding: "20px", maxWidth: "1100px", margin: "auto" }}>
+            <Card
+                sx={{
+                    display: "flex",
+                    flexDirection: { xs: "column", md: "row" },
+                    padding: "20px",
+                    alignItems: "center",
+                }}
+            >
+                <CardMedia
+                    component="img"
+                    sx={{
+                        width: { xs: "100%", md: 400 },
+                        height: { xs: 250, md: 400 },
+                        objectFit: "contain",
+                        padding: "10px",
+                    }}
+                    image={product.image}
+                    alt={product.title}
+                />
 
-  return (
-    <div className="ui grid container">
-      {Object.keys(product).length === 0 ? (
-        <div>...Loading</div>
-      ) : (
-        <div className="ui placeholder segment">
-          <div className="ui two column stackable center aligned grid">
-            <div className="ui vertical divider">AND</div>
-            <div className="middle aligned row">
-              <div className="column lp">
-                <img className="ui fluid image" src={image} alt={title} />
-              </div>
-              <div className="column rp">
-                <h1>{title}</h1>
-                <h2>
-                  <a className="ui teal tag label">${price}</a>
-                </h2>
-                <h3 className="ui brown block header">{category}</h3>
-                <p>{description}</p>
-                <div className="ui vertical animated button" tabIndex="0">
-                  <div className="hidden content">
-                    <i className="shop icon"></i>
-                  </div>
-                  <div className="visible content">Add to Cart</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+                <CardContent
+                    sx={{ flex: 1, textAlign: { xs: "center", md: "left" } }}
+                >
+                    <Typography
+                        variant="h4"
+                        sx={{ fontWeight: "bold", marginBottom: "10px" }}
+                    >
+                        {product.title}
+                    </Typography>
+                    <Typography
+                        variant="body1"
+                        sx={{ color: "#555", marginBottom: "15px" }}
+                    >
+                        {product.description}
+                    </Typography>
+                    <Typography
+                        variant="h5"
+                        sx={{ fontWeight: "bold", color: "#333" }}
+                    >
+                        ${product.price}
+                    </Typography>
+
+                    <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: { xs: "center", md: "left" },
+                            marginTop: "15px",
+                        }}
+                    >
+                        <IconButton
+                            onClick={() =>
+                                setQuantity(Math.max(1, quantity - 1))
+                            }
+                            color="primary"
+                        >
+                            <RemoveIcon />
+                        </IconButton>
+                        <Typography variant="h6" sx={{ margin: "0 10px" }}>
+                            {quantity}
+                        </Typography>
+                        <IconButton
+                            onClick={() => setQuantity(quantity + 1)}
+                            color="primary"
+                        >
+                            <AddIcon />
+                        </IconButton>
+                    </Box>
+
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() =>
+                            dispatch(addToCart({ ...product, quantity }))
+                        }
+                        fullWidth
+                        sx={{
+                            marginTop: "20px",
+                            padding: "10px 20px",
+                            fontSize: "1rem",
+                        }}
+                    >
+                        Add to Cart
+                    </Button>
+                </CardContent>
+            </Card>
+        </Box>
+    );
 };
 
 export default ProductDetail;
